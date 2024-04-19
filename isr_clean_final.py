@@ -5,6 +5,11 @@ from arcgis.geocoding import geocode
 from arcgis.gis import GIS
 import os
 
+#==========================================================================================================#
+# After downloading Anaconda, you will need to create a virtual environment using the following commands:  #
+# ctrl + ` to open terminal > type conda env create -f environment.yml > conda activate ISRenv             #                                                                                    
+#==========================================================================================================#
+
 # Setup basic configuration for logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -12,7 +17,7 @@ def load_data(file_path, sample_size=None):
     """Load data from CSV or Excel file based on file extension and optionally sample it."""
     logging.info(f"Loading data from {file_path}")
     if file_path.endswith('.csv'):
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, low_memory=False)
     elif file_path.endswith('.xlsx'):
         df = pd.read_excel(file_path)
     else:
@@ -310,24 +315,27 @@ def batch_geocode_addresses(addresses_to_geocode, api_key, df):
             df.at[index, 'Latitude'] = result['location']['y']
             df.at[index, 'Longitude'] = result['location']['x']
             # Optionally update the progress description with success message
-            progress_bar.set_description(f"Geocoded: {address}")
+            #progress_bar.set_description(f"Geocoded: {address}")
         except Exception as e:
             logging.error(f"Geocoding failed for {address}: {e}")
             # Update progress bar with error info
-            progress_bar.set_description(f"Failed geocoding: {address}")
+            #progress_bar.set_description(f"Failed geocoding: {address}")
 
 def main():
 
     # API KEY MAY BE INVALID COME MAY 
     api_key = 'AAPK393b8da67c074504bdc73ed3037e193bYC_cZGRLP9Tf-592LpmQzMqO27or9AbbzYGHX1e5Xjowm3CnSytMzKUZ5uxjzysf'
+
     #========================================================================================================
     # If you are updating geo-coordinates for existing data, provide the path to the geocoded data file here.
     # If you are starting from scratch, set this to None.
+    # Note: You can just remove the # sign to uncomment the line below and then add # to comment out the other line
     #========================================================================================================
+    # The last completed csv from running this script
     geocoded_data_path = '3-18-dataset_copy.csv'
     # geocoded_data_path = None
 
-
+    # The latest MProfile and interest data files
     file_path = '9.0 MProfile - donors and affiliates Feb. 2024.xlsx' 
     interest_file_path = 'DART Interest Data 2024 - Known interests for ISR Constituents copy.csv'
 
@@ -381,7 +389,7 @@ def main():
 
     # Save processed data
     logging.info("Saving processed data to file.")
-    processed_data.to_csv('processed_complete.csv', index=False)
+    processed_data.to_csv('new_main_dataset.csv', index=False)
 
     # Extract unique affiliations from processed_data for file creation
     affiliations = processed_data.columns[processed_data.columns.str.startswith('Affiliation: ')]
@@ -391,6 +399,8 @@ def main():
     # Create and save affiliation files
     save_affiliation_files(processed_data, affiliations)
 
+    logging.info("Processing complete.")
+    
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     main()
